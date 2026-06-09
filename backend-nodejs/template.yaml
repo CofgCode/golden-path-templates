@@ -121,7 +121,7 @@ spec:
       properties:
         destination:
           title: Ubicación del repositorio
-          type: object
+          type: string
           ui:field: RepoUrlPicker
           ui:options:
             allowedHosts:
