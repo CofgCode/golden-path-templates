@@ -157,7 +157,7 @@ spec:
       name: Generar archivos desde el skeleton
       action: fetch:template
       input:
-        url: ${{ template.target }}#skeleton
+        url: ./skeleton
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
@@ -167,8 +167,8 @@ spec:
           environment: ${{ parameters.environment }}
           port: ${{ parameters.port }}
           enable_db: ${{ parameters.enable_db }}
-          destination: ${{ parameters.destination | parseRepoUrl }}
-
+          repo_owner: ${{ (parameters.destination | parseRepoUrl).owner }}
+          repo_name: ${{ (parameters.destination | parseRepoUrl).repo }}
     # ── Paso 2 (condicional): Agregar dependencia de DB ───────
     - id: add-db-deps
       name: Agregar dependencias de PostgreSQL
