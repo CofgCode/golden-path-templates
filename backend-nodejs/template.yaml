@@ -183,8 +183,6 @@ spec:
       name: Publicar en GitHub
       action: publish:github
       input:
-        allowedHosts:
-          - github.com
         description: ${{ parameters.description }}
         repoUrl: ${{ parameters.destination }}
         repoVisibility: ${{ parameters.repo_visibility }}
