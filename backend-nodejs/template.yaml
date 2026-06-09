@@ -115,22 +115,20 @@ spec:
           description: Agrega dependencias de pg (PostgreSQL) y variables de entorno de conexión.
 
     # ── Sección 3: Repositorio destino ────────────────────────
-# ── Sección 3: Repositorio destino ────────────────────────
     - title: "3 / 3 — Repositorio en GitHub"
-      # Forzamos a que todo este paso del formulario sea tratado como un objeto contenedor limpio
-      type: object 
       required:
         - destination
       properties:
+        # El componente de Backstage va AQUÍ, aislado como objeto
         destination:
           title: Ubicación del repositorio
           type: object
-          description: Organización y nombre del repositorio que se creará en GitHub.
           ui:field: RepoUrlPicker
           ui:options:
             allowedHosts:
               - github.com
 
+        # Los demás campos van FUERA del objeto 'destination', pero en la misma pantalla
         repo_visibility:
           title: Visibilidad del repositorio
           type: string
