@@ -1,4 +1,4 @@
-apiVersion: scaffolder.backstage.io/v1beta3
+apiVersion: backstage.io/v1alpha1
 kind: Template
 metadata:
   name: golden-path-backend-nodejs
@@ -14,10 +14,10 @@ metadata:
     - golden-path
     - recommended
   annotations:
-    backstage.io/managed-by-location: "url:https://github.com/TU_ORG/golden-path-templates/blob/main/backend-nodejs/template.yaml"
+    backstage.io/managed-by-location: "url:https://github.com/aldo2510/golden-path-templates/blob/main/backend-nodejs/template.yaml"
 
 spec:
-  owner: platform-engineering
+  owner: guests
   type: service
 
   # ─────────────────────────────────────────────────────────────
