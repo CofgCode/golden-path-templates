@@ -1,0 +1,206 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: golden-path-frontend-spa
+  title: "Golden Path: Frontend SPA (React + Vite)"
+  description: >
+    Crea una Single Page Application con React + Vite, Dockerfile multi-stage
+    con nginx, GitHub Actions (CI/CD + Lighthouse) y registro automático
+    en el catálogo de Backstage.
+  tags:
+    - react
+    - vite
+    - frontend
+    - spa
+    - golden-path
+    - recommended
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/TU_ORG/golden-path-templates/blob/main/frontend-spa/template.yaml"
+
+spec:
+  owner: platform-engineering
+  type: website
+
+  parameters:
+    # ── Sección 1: Identidad ──────────────────────────────────
+    - title: "1 / 3 — Identidad de la aplicación"
+      required:
+        - component_id
+        - description
+        - owner
+      properties:
+        component_id:
+          title: Nombre de la aplicación
+          type: string
+          description: >
+            Identificador único (slug). Solo minúsculas, números y guiones.
+            Ejemplo: admin-portal, checkout-ui, dashboard-app.
+          pattern: "^[a-z0-9-]+$"
+          maxLength: 63
+          ui:autofocus: true
+          ui:field: EntityNamePicker
+
+        description:
+          title: Descripción
+          type: string
+          description: Describe brevemente qué hace esta aplicación frontend.
+          maxLength: 200
+
+        owner:
+          title: Equipo propietario
+          type: string
+          ui:field: OwnerPicker
+          ui:options:
+            allowedKinds:
+              - Group
+
+        system:
+          title: Sistema (opcional)
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - System
+
+        backend_service:
+          title: Servicio backend relacionado (opcional)
+          type: string
+          description: Backstage entity ref del API que consume esta SPA.
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Component
+
+    # ── Sección 2: Configuración técnica ─────────────────────
+    - title: "2 / 3 — Configuración técnica"
+      required:
+        - lifecycle
+        - environment
+      properties:
+        lifecycle:
+          title: Ciclo de vida
+          type: string
+          default: experimental
+          enum:
+            - experimental
+            - production
+            - deprecated
+          enumNames:
+            - "Experimental"
+            - "Producción"
+            - "Deprecado"
+
+        environment:
+          title: Ambiente principal
+          type: string
+          default: dev
+          enum:
+            - dev
+            - staging
+            - production
+
+        enable_lighthouse:
+          title: ¿Habilitar Lighthouse CI?
+          type: boolean
+          default: true
+          description: Ejecuta auditoría de performance, accesibilidad y SEO en cada merge a main.
+
+        base_api_url:
+          title: URL base del API (variable de entorno)
+          type: string
+          description: >
+            Valor por defecto para VITE_API_BASE_URL.
+            Ejemplo: https://api.tuempresa.com/v1
+          default: "http://localhost:3000"
+
+    # ── Sección 3: Repositorio destino ────────────────────────
+    - title: "3 / 3 — Repositorio en GitHub"
+      required:
+        - destination
+      properties:
+        destination:
+          title: Ubicación del repositorio
+          type: object
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+        repo_visibility:
+          title: Visibilidad del repositorio
+          type: string
+          default: private
+          enum:
+            - private
+            - public
+            - internal
+
+        default_branch:
+          title: Rama principal
+          type: string
+          default: main
+          enum:
+            - main
+            - master
+            - develop
+
+  steps:
+    # ── Paso 1: Procesar skeleton ─────────────────────────────
+    - id: fetch-template
+      name: Generar archivos desde el skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          system: ${{ parameters.system }}
+          lifecycle: ${{ parameters.lifecycle }}
+          environment: ${{ parameters.environment }}
+          base_api_url: ${{ parameters.base_api_url }}
+          enable_lighthouse: ${{ parameters.enable_lighthouse }}
+          backend_service: ${{ parameters.backend_service }}
+          destination: ${{ parameters.destination | parseRepoUrl }}
+
+    # ── Paso 2: Publicar en GitHub ────────────────────────────
+    - id: publish-github
+      name: Publicar en GitHub
+      action: publish:github
+      input:
+        allowedHosts:
+          - github.com
+        description: ${{ parameters.description }}
+        repoUrl: ${{ parameters.destination }}
+        repoVisibility: ${{ parameters.repo_visibility }}
+        defaultBranch: ${{ parameters.default_branch }}
+        gitCommitMessage: "feat: initial scaffold from golden-path-frontend-spa"
+        gitAuthorName: "Platform Engineering Bot"
+        gitAuthorEmail: "platform@tuempresa.com"
+        topics:
+          - react
+          - vite
+          - frontend
+          - golden-path
+
+    # ── Paso 3: Registrar en el catálogo ─────────────────────
+    - id: catalog-register
+      name: Registrar en el catálogo
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish-github'].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Repositorio en GitHub
+        url: ${{ steps['publish-github'].output.remoteUrl }}
+        icon: github
+
+      - title: Ver en el catálogo de Backstage
+        url: ${{ steps['catalog-register'].output.entityRef }}
+        icon: catalog
+
+      - title: Pipeline de CI/CD
+        url: ${{ steps['publish-github'].output.remoteUrl }}/actions
+        icon: dashboard

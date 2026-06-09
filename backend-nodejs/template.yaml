@@ -1,0 +1,234 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: golden-path-backend-nodejs
+  title: "Golden Path: Backend Node.js / Express"
+  description: >
+    Crea un microservicio Node.js con Express, Dockerfile multi-stage,
+    GitHub Actions (CI/CD) y registro automático en el catálogo de Backstage.
+    Incluye helmet, cors, morgan y endpoint /health listo para producción.
+  tags:
+    - nodejs
+    - express
+    - backend
+    - golden-path
+    - recommended
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/TU_ORG/golden-path-templates/blob/main/backend-nodejs/template.yaml"
+
+spec:
+  owner: platform-engineering
+  type: service
+
+  # ─────────────────────────────────────────────────────────────
+  # PARÁMETROS — Wizard de entrada en la UI de Backstage
+  # ─────────────────────────────────────────────────────────────
+  parameters:
+    # ── Sección 1: Identidad del componente ───────────────────
+    - title: "1 / 3 — Identidad del servicio"
+      required:
+        - component_id
+        - description
+        - owner
+      properties:
+        component_id:
+          title: Nombre del servicio
+          type: string
+          description: >
+            Identificador único (slug). Solo minúsculas, números y guiones.
+            Ejemplo: payments-api, user-service, order-processor.
+          pattern: "^[a-z0-9-]+$"
+          maxLength: 63
+          ui:autofocus: true
+          ui:field: EntityNamePicker
+
+        description:
+          title: Descripción
+          type: string
+          description: Describe brevemente qué hace este servicio.
+          maxLength: 200
+
+        owner:
+          title: Equipo propietario
+          type: string
+          description: Equipo responsable del servicio en Backstage.
+          ui:field: OwnerPicker
+          ui:options:
+            allowedKinds:
+              - Group
+
+        system:
+          title: Sistema (opcional)
+          type: string
+          description: Sistema al que pertenece este servicio.
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - System
+
+    # ── Sección 2: Configuración técnica ─────────────────────
+    - title: "2 / 3 — Configuración técnica"
+      required:
+        - lifecycle
+        - environment
+        - port
+      properties:
+        lifecycle:
+          title: Ciclo de vida
+          type: string
+          description: Estado actual del componente en producción.
+          default: experimental
+          enum:
+            - experimental
+            - production
+            - deprecated
+          enumNames:
+            - "Experimental (en desarrollo)"
+            - "Producción (estable)"
+            - "Deprecado (en retiro)"
+
+        environment:
+          title: Ambiente principal
+          type: string
+          default: dev
+          enum:
+            - dev
+            - staging
+            - production
+          enumNames:
+            - "Desarrollo"
+            - "Staging"
+            - "Producción"
+
+        port:
+          title: Puerto de la aplicación
+          type: integer
+          default: 3000
+          minimum: 1024
+          maximum: 65535
+          description: Puerto en el que escuchará el servidor Express.
+
+        enable_db:
+          title: ¿Incluir integración con base de datos?
+          type: boolean
+          default: false
+          description: Agrega dependencias de pg (PostgreSQL) y variables de entorno de conexión.
+
+    # ── Sección 3: Repositorio destino ────────────────────────
+    - title: "3 / 3 — Repositorio en GitHub"
+      required:
+        - destination
+      properties:
+        destination:
+          title: Ubicación del repositorio
+          type: object
+          description: >
+            Organización y nombre del repositorio que se creará en GitHub.
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+        repo_visibility:
+          title: Visibilidad del repositorio
+          type: string
+          default: private
+          enum:
+            - private
+            - public
+            - internal
+          enumNames:
+            - "Privado"
+            - "Público"
+            - "Interno (solo organización)"
+
+        default_branch:
+          title: Rama principal
+          type: string
+          default: main
+          enum:
+            - main
+            - master
+            - develop
+
+  # ─────────────────────────────────────────────────────────────
+  # PASOS — Secuencia de acciones del Scaffolder
+  # ─────────────────────────────────────────────────────────────
+  steps:
+    # ── Paso 1: Procesar el skeleton ──────────────────────────
+    - id: fetch-template
+      name: Generar archivos desde el skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          system: ${{ parameters.system }}
+          lifecycle: ${{ parameters.lifecycle }}
+          environment: ${{ parameters.environment }}
+          port: ${{ parameters.port }}
+          enable_db: ${{ parameters.enable_db }}
+          destination: ${{ parameters.destination | parseRepoUrl }}
+
+    # ── Paso 2 (condicional): Agregar dependencia de DB ───────
+    - id: add-db-deps
+      name: Agregar dependencias de PostgreSQL
+      action: fetch:plain:file
+      if: ${{ parameters.enable_db }}
+      input:
+        url: ./extras/db-config.js
+        targetPath: src/config/db.js
+
+    # ── Paso 3: Crear repositorio en GitHub ───────────────────
+    - id: publish-github
+      name: Publicar en GitHub
+      action: publish:github
+      input:
+        allowedHosts:
+          - github.com
+        description: ${{ parameters.description }}
+        repoUrl: ${{ parameters.destination }}
+        repoVisibility: ${{ parameters.repo_visibility }}
+        defaultBranch: ${{ parameters.default_branch }}
+        gitCommitMessage: "feat: initial scaffold from golden-path-backend-nodejs"
+        gitAuthorName: "Platform Engineering Bot"
+        gitAuthorEmail: "platform@tuempresa.com"
+        topics:
+          - nodejs
+          - express
+          - golden-path
+          - ${{ parameters.environment }}
+        requireCodeOwnerReviews: true
+        deleteBranchOnMerge: true
+        allowMergeCommit: false
+        allowSquashMerge: true
+        allowRebaseMerge: false
+        hasProjects: false
+        hasWiki: false
+
+    # ── Paso 4: Registrar en el catálogo de Backstage ─────────
+    - id: catalog-register
+      name: Registrar en el catálogo
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish-github'].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  # ─────────────────────────────────────────────────────────────
+  # OUTPUT — Links que se muestran al finalizar
+  # ─────────────────────────────────────────────────────────────
+  output:
+    links:
+      - title: Repositorio en GitHub
+        url: ${{ steps['publish-github'].output.remoteUrl }}
+        icon: github
+
+      - title: Ver en el catálogo de Backstage
+        url: ${{ steps['catalog-register'].output.entityRef }}
+        icon: catalog
+
+      - title: Pipeline de CI/CD
+        url: ${{ steps['publish-github'].output.remoteUrl }}/actions
+        icon: dashboard
