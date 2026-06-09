@@ -215,20 +215,6 @@ spec:
   # OUTPUT — Links que se muestran al finalizar
   # ─────────────────────────────────────────────────────────────
   output:
-    links:
-      - title: Repositorio en GitHub
-        url: ${{ steps['publish-github'].output.remoteUrl }}
-        icon: github
-
-      - title: Ver en el catálogo de Backstage
-        url: ${{ steps['catalog-register'].output.entityRef }}
-        icon: catalog
-
-      - title: Pipeline de CI/CD
-        url: ${{ steps['publish-github'].output.remoteUrl }}/actions
-        icon: dashboard
-
-  output:
       links:
         - title: Repositorio en GitHub
           url: ${{ steps['publish-github'].output.remoteUrl }}
