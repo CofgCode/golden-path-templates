@@ -115,15 +115,17 @@ spec:
           description: Agrega dependencias de pg (PostgreSQL) y variables de entorno de conexión.
 
     # ── Sección 3: Repositorio destino ────────────────────────
+# ── Sección 3: Repositorio destino ────────────────────────
     - title: "3 / 3 — Repositorio en GitHub"
+      # Forzamos a que todo este paso del formulario sea tratado como un objeto contenedor limpio
+      type: object 
       required:
         - destination
       properties:
         destination:
           title: Ubicación del repositorio
           type: object
-          description: >
-            Organización y nombre del repositorio que se creará en GitHub.
+          description: Organización y nombre del repositorio que se creará en GitHub.
           ui:field: RepoUrlPicker
           ui:options:
             allowedHosts:
