@@ -116,7 +116,6 @@ spec:
 
     # ── Sección 3: Repositorio destino ────────────────────────
     - title: "3 / 3 — Repositorio en GitHub"
-      type: object
       required:
         - destination
       properties:
@@ -149,7 +148,6 @@ spec:
             - main
             - master
             - develop
-
   # ─────────────────────────────────────────────────────────────
   # PASOS — Secuencia de acciones del Scaffolder
   # ─────────────────────────────────────────────────────────────
