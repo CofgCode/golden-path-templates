@@ -14,7 +14,7 @@ metadata:
     - golden-path
     - recommended
   annotations:
-    backstage.io/managed-by-location: "url:https://github.com/aldo2510/golden-path-templates/blob/main/backend-nodejs/template.yaml"
+    backstage.io/managed-by-location: "url:https://github.com/CofgCode/golden-path-templates/blob/main/backend-nodejs/template.yaml"
 
 spec:
   owner: guests
