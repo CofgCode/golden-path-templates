@@ -120,7 +120,7 @@ spec:
       properties:
         destination:
           title: Ubicación del repositorio
-          type: object
+          type: string
           ui:field: RepoUrlPicker
           ui:options:
             allowedHosts:
@@ -161,15 +161,14 @@ spec:
           base_api_url: ${{ parameters.base_api_url }}
           enable_lighthouse: ${{ parameters.enable_lighthouse }}
           backend_service: ${{ parameters.backend_service }}
-          destination: ${{ parameters.destination | parseRepoUrl }}
+          repo_owner: ${{ (parameters.destination | parseRepoUrl).owner }}
+          repo_name: ${{ (parameters.destination | parseRepoUrl).repo }}
 
     # ── Paso 2: Publicar en GitHub ────────────────────────────
     - id: publish-github
       name: Publicar en GitHub
       action: publish:github
       input:
-        allowedHosts:
-          - github.com
         description: ${{ parameters.description }}
         repoUrl: ${{ parameters.destination }}
         repoVisibility: ${{ parameters.repo_visibility }}
@@ -182,6 +181,13 @@ spec:
           - vite
           - frontend
           - golden-path
+        requireCodeOwnerReviews: true
+        deleteBranchOnMerge: true
+        allowMergeCommit: false
+        allowSquashMerge: true
+        allowRebaseMerge: false
+        hasProjects: false
+        hasWiki: false
 
     # ── Paso 3: Registrar en el catálogo ─────────────────────
     - id: catalog-register
@@ -198,9 +204,9 @@ spec:
         icon: github
 
       - title: Ver en el catálogo de Backstage
-        url: ${{ steps['catalog-register'].output.entityRef }}
+        url: ${{ steps['catalog-register'].output.catalogInfoUrl }}
         icon: catalog
 
       - title: Pipeline de CI/CD
-        url: ${{ steps['publish-github'].output.remoteUrl }}/actions
+        url: ${{ steps['publish-github'].output.remoteUrl | replace(".git", "") }}/actions
         icon: dashboard
